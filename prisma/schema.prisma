@@ -1,0 +1,73 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model customers {
+  customer_id       Int      @id @default(autoincrement())
+  first_name        String   @db.VarChar(50)
+  last_name         String   @db.VarChar(50)
+  phone             String?  @db.VarChar(50)
+  res_address       String   @db.VarChar(50)
+  email_address     String   @unique(map: "email_address") @db.VarChar(30)
+  customer_password String
+  status            String   @db.VarChar(50)
+  orders            orders[]
+}
+
+model menus {
+  menu_id       Int        @id @default(autoincrement())
+  name          String     @db.VarChar(50)
+  price         Decimal    @db.Decimal(4, 2)
+  restaurant_id Int
+  resturants    resturants @relation(fields: [restaurant_id], references: [restaurant_id], onDelete: Cascade, onUpdate: NoAction, map: "fk_resuturant_id")
+  orders        orders[]
+
+  @@index([restaurant_id], map: "fk_resuturant_id")
+}
+
+model order_statuses {
+  order_status_id Int      @id @db.TinyInt
+  name            String   @db.VarChar(50)
+  orders          orders[]
+}
+
+model orders {
+  order_id       Int            @id @default(autoincrement())
+  customer_id    Int
+  order_date     DateTime       @db.Date
+  restaurant_id  Int
+  menu_id        Int
+  qty            Int            @default(0)
+  status         Int            @db.TinyInt
+  comments       String?        @db.VarChar(2000)
+  delivery_date  DateTime?      @db.Date
+  processed_by   String         @db.VarChar(50)
+  batch_no       String?        @db.VarChar(20)
+  customers      customers      @relation(fields: [customer_id], references: [customer_id], onDelete: NoAction, map: "fk_orders_customers")
+  menus          menus          @relation(fields: [menu_id], references: [menu_id], onDelete: NoAction, map: "fk_orders_menu")
+  order_statuses order_statuses @relation(fields: [status], references: [order_status_id], onDelete: NoAction, map: "fk_orders_order_statuses")
+  resturants     resturants     @relation(fields: [restaurant_id], references: [restaurant_id], onDelete: NoAction, map: "fk_orders_resturant")
+
+  @@index([customer_id], map: "fk_orders_customers")
+  @@index([menu_id], map: "fk_orders_menu")
+  @@index([status], map: "fk_orders_order_statuses")
+  @@index([restaurant_id], map: "fk_orders_resturant")
+}
+
+model resturants {
+  restaurant_id Int       @id @default(autoincrement())
+  name          String    @db.VarChar(50)
+  phoneNo1      String    @db.VarChar(20)
+  phoneNo2      String?   @db.VarChar(20)
+  location      String    @db.VarChar(50)
+  city          String    @db.VarChar(50)
+  email_address String?   @db.VarChar(50)
+  creation_date DateTime? @default(now()) @db.DateTime(0)
+  menus         menus[]
+  orders        orders[]
+}
